@@ -1,0 +1,146 @@
+<?xml version="1.0" ?>
+<data>
+    <query id="get_score">
+		SELECT tpoint, bpoint
+		FROM baseball.score
+		WHERE GMKEY = '{GMKEY}'
+    </query>
+
+	<query id="get_team_name">
+		SELECT team, team_kor
+		FROM baseball.team_name
+		WHERE 1 = 1
+    </query>
+
+	<query id="get_method">
+		SELECT kor, method
+		FROM lab2ai_article.method_info
+		WHERE category = '{0}'
+    </query>
+
+    <query id="get_teamrank_daily">
+		SELECT GYEAR, RANK, LEAGUE, TEAM, GAME, WIN
+                        , LOSE, SAME, WRA, AB, HIT, HR, SB, RUN, INN
+                        , INN2, R, ER, ERR, HRA, LRA, BRA, ERA, DRA
+                        , `CONTINUE`, H2, H3, BB, HP, SF, date
+		FROM baseball.teamrank_daily
+		WHERE 1 = 1
+        AND date = '{DATE}'
+        AND TEAM  = '{TEAM}'
+    </query>
+
+	<query id="get_gamecontapp">
+		SELECT GMKEY, GYEAR, GDAY, SERNO, TURN, INN, TB
+						, INN2, OCOUNT, BCOUNT, RTURN, HOW, FIELD
+						, PLACE, HITTER, HITNAME, PITNAME, PITCHER
+						, CATNAME, CATCHER, BCNT, TSCORE, BSCORE
+						, BASE1B, BASE2B, BASE3B, BASE1A, BASE2A, BASE3A
+		FROM baseball.gamecontapp
+		WHERE 1 = 1
+        AND GMKEY = '{GMKEY}'
+    </query>
+
+	<query id="get_person_info">
+		SELECT PCODE, NAME, TEAM, T_ID, POS, POSITION, HITTYPE
+						, BIRTH, HEIGHT, WEIGHT, INDATE, PROMISE, MONEY
+						, ADDR, CAREER, CAREER2, JOB_CD, ACTIVE_CD
+						, CONTRACT_CD, NATIONAL_CD, BLOOD_SC
+		FROM baseball.person
+		WHERE 1 = 1
+        AND PCODE = '{PCODE}'
+    </query>
+
+	<query id="get_entry">
+		SELECT GMKEY, TURN, NAME, PCODE, TEAM, POSI, CHIN, CHTURN, CHBCNT, CHIN2
+		FROM baseball.entry
+		WHERE 1 = 1
+        AND GMKEY = '{GMKEY}'
+    </query>
+
+	<query id="get_season_wls">
+		<![CDATA[
+		SELECT WLS
+		FROM baseball.pitcher
+		WHERE 1 = 1
+		AND PCODE IN ('T', 'B')
+		AND GDAY LIKE '{GYEAR}%'
+		AND GDAY <= '{GDAY}'
+		AND ((SUBSTRING(GMKEY, 9, 2) = '{TEAM_CD}' AND TB = 'T') OR
+				(SUBSTRING(GMKEY, 11, 2) = '{TEAM_CD}' AND TB = 'B'))
+		ORDER BY GDAY DESC;
+		]]>
+	</query>
+
+	<query id="get_today_hitters">
+		SELECT NAME, PCODE, TURN, ONETURN, PA, AB, RBI, RUN, HIT, H2, H3, HR, SB, CS, SH, SF, BB, IB, HP, KK, GD, ERR, LOB
+		FROM baseball.hitter
+		WHERE 1 = 1
+		AND GMKEY = '{GMKEY}'
+		AND TB =  '{TB}'
+		AND PCODE NOT IN ('T', 'B')
+	</query>
+
+	<query id="get_hitter">
+		<![CDATA[
+		SELECT SUBSTRING(GDAY, 1, 4) AS GYEAR, GDAY, NAME, PCODE, TURN, ONETURN
+						, PA, AB, RBI, RUN, HIT, H2, H3, HR, SB, CS, SH, SF, BB, IB, HP, KK, GD, ERR, LOB
+		FROM baseball.hitter
+		WHERE 1 = 1
+		AND PCODE = '{PCODE}'
+		AND SUBSTRING(GMKEY, 1, 1) < 3
+		AND GDAY <= '{GDAY}'
+		ORDER BY GDAY DESC
+		]]>
+	</query>
+
+	<query id="get_pitcher">
+		<![CDATA[
+		SELECT SUBSTRING(GDAY, 1, 4) AS GYEAR, GDAY, TB, NAME, PCODE, POS, `START`, QUIT
+						, CG, SHO, WLS, HOLD, INN, INN2, BF, PA, AB, HIT, H2, H3, HR, SB, CS, SH, SF, BB, IB
+						, HP, KK, GD, WP, BK, ERR, R, ER
+		FROM baseball.pitcher
+		WHERE 1 = 1
+		AND SUBSTRING(GMKEY, 1, 1) < 3
+		AND GDAY <= '{GDAY}'
+		AND PCODE = '{PCODE}'
+		ORDER BY GDAY DESC
+		]]>
+	</query>
+
+	<query id="get_hitter_record_matrix_mix">
+		<![CDATA[
+		SELECT GAMEID, GYEAR, SEQNO, INN_NO, BAT_AROUND_NO, TB_SC, BEFORE_OUT_CN
+						, BEFORE_AWAY_SCORE_CN, BEFORE_HOME_SCORE_CN, BEFORE_SCORE_GAP_CN
+						, BEFORE_RUNNER_SC, AFTER_OUT_CN, AFTER_AWAY_SCORE_CN, AFTER_HOME_SCORE_CN
+						, AFTER_SCORE_GAP_CN, AFTER_RUNNER_SC, BAT_P_ID, PIT_P_ID, RUN_P_ID, HOW_ID
+						, LIVETEXT_IF, BEFORE_WE_RT, AFTER_WE_RT, WPA_RT, LI_RT, RE_RT, REG_DT
+		FROM baseball.ie_record_matrix_mix
+		WHERE 1 = 1
+		AND SUBSTRING(GAMEID, 1, 8) <= '{GDAY}'
+		AND BAT_P_ID = '{PCODE}'
+		ORDER BY GAMEID DESC
+		]]>
+	</query>
+
+	<query id="get_record_matrix_mix">
+		<![CDATA[
+		SELECT GAMEID, GYEAR, SEQNO, INN_NO, BAT_AROUND_NO, TB_SC, BEFORE_OUT_CN
+						, BEFORE_AWAY_SCORE_CN, BEFORE_HOME_SCORE_CN, BEFORE_SCORE_GAP_CN
+						, BEFORE_RUNNER_SC, AFTER_OUT_CN, AFTER_AWAY_SCORE_CN, AFTER_HOME_SCORE_CN
+						, AFTER_SCORE_GAP_CN, AFTER_RUNNER_SC, BAT_P_ID, PIT_P_ID, RUN_P_ID, HOW_ID
+						, LIVETEXT_IF, BEFORE_WE_RT, AFTER_WE_RT, WPA_RT, LI_RT, RE_RT, REG_DT
+		FROM baseball.ie_record_matrix_mix
+		WHERE 1 = 1
+		AND GAMEID = '{GMKEY}'
+		]]>
+	</query>
+
+	<query id="get_gameinfo_between">
+		SELECT GmKey, Gday, Dbhd, Stadium, Vteam, Hteam, Sttm, Entm, Dltm, Gmtm, Stad
+						, Umpc, Ump1, Ump2, Ump3, Umpl, Umpr, Scoa, Scob, Temp, Mois, Weath, Wind
+						, Wins, Gweek, Crowd, Chajun
+		FROM baseball.gameinfo
+		WHERE 1 = 1
+		AND {WHERE}
+	</query>
+</data>
