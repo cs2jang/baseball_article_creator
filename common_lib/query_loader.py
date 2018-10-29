@@ -18,7 +18,7 @@ class QueryLoader(object):
         if location is None:
             location = 'query_xml'
 
-        if os.getcwd().split('\\')[-1] != 'lab2ai_baseball':
+        if os.getcwd().split('\\')[-1] != 'baseball_article_creator':
             location = '../' + location
 
         file_names = os.listdir(location)

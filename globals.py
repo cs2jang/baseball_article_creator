@@ -202,6 +202,29 @@ def initialize(game_id):
     global pitcher_method
     global df_gamecontapp
 
+    AWAY_ID = None
+    HOME_ID = None
+    AWAY_TEAM = None  # 원정팀
+    HOME_TEAM = None  # 홈팀
+    AWAY_SCORE = None  # 원정팀 득점
+    HOME_SCORE = None  # 홈팀 득점
+    WIN_TEAM = None  # 승리팀
+    LOSE_TEAM = None  # 패배팀
+    WIN_TEAM_SCORE = None  # 승리팀 득점
+    LOSE_TEAM_SCORE = None  # 패배팀 득점
+    IS_DRAW = False
+    GAME_DATE = None
+    GAME_ID = None
+    team_name_dict = None
+    team_method = None
+    sub_team_method = None
+    player_method = None
+    game_method = None
+    event_method = None
+    hitter_method = None
+    pitcher_method = None
+    df_gamecontapp = None
+
     team_name_dict = m.get_team_name()
     game_score = m.get_score(game_id)
     df_gamecontapp = m.get_df_gamecontapp(game_id)
