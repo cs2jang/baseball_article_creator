@@ -3,7 +3,7 @@ import globals as g
 
 class PitcherRecord(object):
     def __init__(self, pitcher_code=None):
-        self.pitcher_code = pitcher_code
+        self.pitcher_code = str(pitcher_code)
         self.game_id = g.GAME_ID
         self.df_today_record = None
         self.df_season_record = None
@@ -14,9 +14,11 @@ class PitcherRecord(object):
         g.define_method(self, g.pitcher_method)
 
     def set_hitter_record(self):
-        self.df_total_record = g.m.get_df_pitcher(self.game_id, self.pitcher_code)
-        self.df_today_record = self.df_total_record[self.df_total_record['GDAY'] == self.game_id[0:8]]
-        self.df_season_record = self.df_total_record[self.df_total_record['GYEAR'] == self.game_id[0:4]]
+        # self.df_total_record = g.m.get_df_pitcher(self.game_id, self.pitcher_code)
+        # self.df_today_record = self.df_total_record[self.df_total_record['GDAY'] == self.game_id[0:8]]
+        self.df_today_record = g.df_game_pitchers[g.df_game_pitchers['PCODE'] == self.pitcher_code]
+        self.df_season_record = g.m.get_df_pitcher_total(self.game_id, self.pitcher_code)
+        # self.df_season_record = self.df_total_record[self.df_total_record['GYEAR'] == self.game_id[0:4]]
 
     def name(self):
         if self.pitcher_code:

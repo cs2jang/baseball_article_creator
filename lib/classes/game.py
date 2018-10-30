@@ -16,10 +16,12 @@ class GameVariables(object):
         self.home_team_info = Team(g.HOME_ID)
         self.hitter_record_dict = {}
         self.pitcher_record_dict = {}
-        self.df_record_matrix = g.m.get_df_record_matrix_mix(self.game_id)
         self.winning_hit_dict = {}
+        self.top_player_value = None
+        self.is_winning_hit_flag = False
 
         self.set_player_record()
+        self.set_top_player()
         g.define_method(self, g.game_method)
         g.set_dynamic_variable_v2(self, 'dynamic_variable')
 
@@ -67,12 +69,15 @@ class GameVariables(object):
             return False
 
     def top_player(self):
+        return self.top_player_value
+
+    def set_top_player(self):
         """
         탑플레이어
         :return:
         """
-        df_hitter_group = self.df_record_matrix.groupby(['BAT_P_ID'])
-        df_pitcher_group = self.df_record_matrix.groupby(['PIT_P_ID'])
+        df_hitter_group = g.df_record_matrix.groupby(['BAT_P_ID'])
+        df_pitcher_group = g.df_record_matrix.groupby(['PIT_P_ID'])
 
         hitter_list = self.get_hitter_top_point_list(df_hitter_group)
         pitcher_list = self.get_pitcher_top_point_list(df_pitcher_group)
@@ -92,7 +97,7 @@ class GameVariables(object):
             top_player = pitchers[0]['PCODE']
             pos = 'pitcher'
 
-        return Player(top_player, win_team, pos)
+        self.top_player_value = Player(top_player, win_team, pos)
 
     def get_hitter_top_point_list(self, df_group):
         hitter_list = []
@@ -108,9 +113,9 @@ class GameVariables(object):
             hitter_record = self.hitter_record_dict[p_code]
             p_point += (
                         hitter_record.ab() * 0.5 + hitter_record.run() * 2 + hitter_record.rbi() * 4 + hitter_record.err() * -5)
-            if hitter_record.is_cycling_hit():
+            if hitter_record.is_winning_hit_flag:
                 p_point += 40
-            if hitter_record.is_winning_hit():
+            if hitter_record.is_winning_hit_flag:
                 p_point += 7
 
             hitter_list.append({'PCODE': p_code, 'POINT': p_point, 'TB': p_tb})
@@ -263,7 +268,7 @@ class GameVariables(object):
         return 'KBO리그'
 
     def is_winning_hit(self):
-        df_record = self.df_record_matrix.sort_values(by='SEQNO', ascending=False)
+        df_record = g.df_record_matrix.sort_values(by='SEQNO', ascending=False)
 
         if df_record.iloc[0]['AFTER_AWAY_SCORE_CN'] > df_record.iloc[0]['AFTER_HOME_SCORE_CN']:
             tb_win = 'T'
@@ -273,48 +278,52 @@ class GameVariables(object):
         index_cnt = 0
         for i, row in df_record.iterrows():
             if index_cnt == 0 and row['AFTER_SCORE_GAP_CN'] == 0:
-                return False
+                self.is_winning_hit_flag = False
+                return self.is_winning_hit_flag
 
             index_cnt += 1
             if (tb_win == 'T' and row['AFTER_SCORE_GAP_CN'] >= 0) or (tb_win == 'B' and row['AFTER_SCORE_GAP_CN'] <= 0):
                 s_record = df_record.iloc[index_cnt - 2]
                 if '실책으로' in s_record['LIVETEXT_IF']:
-                    return False
+                    self.is_winning_hit_flag = False
+                    return self.is_winning_hit_flag
 
                 if s_record['HOW_ID'] not in g.HIT:
-                    return False
+                    self.is_winning_hit_flag = False
+                    return self.is_winning_hit_flag
                 else:
                     self.winning_hit_dict = {
                         'HITTER': s_record['BAT_P_ID'],
                         'INNING': s_record['INN_NO'],
                         'HOW_KOR': g.HOW_KOR_DICT[s_record['HOW_ID']]
                     }
-                    return True
+                    self.is_winning_hit_flag = True
+                    return self.is_winning_hit_flag
 
-        return False
+        return self.is_winning_hit_flag
 
     def winning_hit(self):
-        if self.is_winning_hit():
+        if self.is_winning_hit_flag:
             WinningHitter = namedtuple('WinningHitter', ['타자'])
             return WinningHitter(HitterRecord(self.winning_hit_dict['HITTER']))
         else:
             return False
 
     def winning_hit_kor(self):
-        if self.is_winning_hit():
+        if self.is_winning_hit_flag:
             return self.winning_hit_dict['HOW_KOR']
         else:
             return False
 
     def winning_hit_inning(self):
-        if self.is_winning_hit():
+        if self.is_winning_hit_flag:
             return self.winning_hit_dict['INNING']
         else:
             return False
 
     def winning_point_inning(self):
         if not self.is_draw():
-            df_record = self.df_record_matrix.sort_values(by='SEQNO', ascending=False)
+            df_record = g.df_record_matrix.sort_values(by='SEQNO', ascending=False)
 
             if df_record.iloc[0]['AFTER_AWAY_SCORE_CN'] > df_record.iloc[0]['AFTER_HOME_SCORE_CN']:
                 tb_win = 'T'
@@ -333,8 +342,8 @@ class GameVariables(object):
         return False
 
     def set_player_record(self):
-        df_hitter_group = self.df_record_matrix.groupby(['BAT_P_ID'])
-        df_pitcher_group = self.df_record_matrix.groupby(['PIT_P_ID'])
+        df_hitter_group = g.df_record_matrix.groupby(['BAT_P_ID'])
+        df_pitcher_group = g.df_record_matrix.groupby(['PIT_P_ID'])
 
         for hitter in df_hitter_group:
             p_code = hitter[0]  # name key

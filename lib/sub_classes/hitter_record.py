@@ -3,10 +3,12 @@ import globals as g
 
 class HitterRecord(object):
     def __init__(self, hitter_code=None):
-        self.hitter_code = hitter_code
+        self.hitter_code = str(hitter_code)
         self.game_id = g.GAME_ID
         self.consecutive_hr = []
+        self.is_consecutive_hr_flag = False
         self.winning_hit_kor = ''
+        self.is_winning_hit_flag = False
         self.df_today_record = None
         self.df_season_record = None
         self.df_total_record = None
@@ -18,11 +20,10 @@ class HitterRecord(object):
         g.define_method(self, g.hitter_method)
 
     def set_hitter_record(self):
-        self.df_total_record = g.m.get_df_hitter(self.game_id, self.hitter_code)
-        self.df_today_record = self.df_total_record[self.df_total_record['GDAY'] == self.game_id[0:8]]
-        self.df_season_record = self.df_total_record[self.df_total_record['GYEAR'] == self.game_id[0:4]]
-        self.df_hitter_record_matrix = g.m.get_df_hitter_record_matrix_mix(self.game_id, self.hitter_code)
-        self.df_record_matrix = g.m.get_df_record_matrix_mix(self.game_id)
+        self.df_today_record = g.df_game_hitters[g.df_game_hitters['PCODE'] == self.hitter_code]
+        # self.df_total_record = g.m.get_df_hitter(self.game_id, self.hitter_code)
+        # self.df_today_record = self.df_total_record[self.df_total_record['GDAY'] == self.game_id[0:8]]
+        # self.df_season_record = self.df_total_record[self.df_total_record['GYEAR'] == self.game_id[0:4]]
 
     def name(self):
         if self.hitter_code:
@@ -111,8 +112,9 @@ class HitterRecord(object):
             return False
 
     def is_consecutive_hr(self):
+        df_hitter_record_matrix = g.m.get_df_hitter_record_matrix_mix(self.game_id, self.hitter_code)
         if self.hitter_code:
-            df_hitter_record = self.df_hitter_record_matrix[self.df_hitter_record_matrix['GAMEID'] == self.game_id]
+            df_hitter_record = df_hitter_record_matrix[df_hitter_record_matrix['GAMEID'] == self.game_id]
             counter = 0
             self.consecutive_hr = []
             for i, row in df_hitter_record.iterrows():
@@ -124,16 +126,13 @@ class HitterRecord(object):
                 else:
                     counter = 0
 
-            if self.consecutive_hr:
-                return True
-            else:
-                return False
-        else:
-            return False
+        if self.consecutive_hr:
+            self.is_consecutive_hr_flag = True
+        return self.is_consecutive_hr_flag
 
     def consecutive_hr_num(self):
         if self.hitter_code:
-            if self.is_consecutive_hr():
+            if self.is_consecutive_hr_flag:
                 return max(self.consecutive_hr)
             else:
                 return 0
@@ -141,8 +140,9 @@ class HitterRecord(object):
             return False
 
     def is_winning_hit(self):
+        df_record_matrix = g.df_record_matrix
         if self.hitter_code:
-            df_record = self.df_record_matrix.sort_values(by='SEQNO', ascending=False)
+            df_record = df_record_matrix.sort_values(by='SEQNO', ascending=False)
 
             if df_record.iloc[0]['AFTER_AWAY_SCORE_CN'] > df_record.iloc[0]['AFTER_HOME_SCORE_CN']:
                 tb_win = 'T'
@@ -152,27 +152,32 @@ class HitterRecord(object):
             index_cnt = 0
             for i, row in df_record.iterrows():
                 if index_cnt == 0 and row['AFTER_SCORE_GAP_CN'] == 0 :
-                    return False
+                    self.is_winning_hit_flag = False
+                    return self.is_winning_hit_flag
 
                 index_cnt += 1
                 if (tb_win == 'T' and row['AFTER_SCORE_GAP_CN'] >= 0) or (tb_win == 'B' and row['AFTER_SCORE_GAP_CN'] <=0 ):
                     s_record = df_record.iloc[index_cnt - 2]
                     if '실책으로' in s_record['LIVETEXT_IF']:
-                        return False
+                        self.is_winning_hit_flag = False
+                        return self.is_winning_hit_flag
 
                     bat_code = s_record['BAT_P_ID']
                     if self.hitter_code != bat_code:
-                        return False
+                        self.is_winning_hit_flag = False
+                        return self.is_winning_hit_flag
 
                     if s_record['HOW_ID'] not in g.HIT:
-                        return False
+                        self.is_winning_hit_flag = False
+                        return self.is_winning_hit_flag
                     else:
                         self.winning_hit_kor = g.HOW_KOR_DICT[s_record['HOW_ID']]
-                        return True
+                        self.is_winning_hit_flag = True
+                        return self.is_winning_hit_flag
 
-            return False
+            return self.is_winning_hit_flag
         else:
-            return False
+            return self.is_winning_hit_flag
 
     def how_winning_hit(self):
         if self.hitter_code:

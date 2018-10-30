@@ -1,6 +1,7 @@
 import re
 import models
 import random
+import pandas as pd
 from korean import l10n
 
 m = models.Lab2AIConn()
@@ -27,6 +28,12 @@ event_method = None
 hitter_method = None
 pitcher_method = None
 df_gamecontapp = None
+df_game_hitters = None
+df_game_pitchers = None
+df_record_matrix = None
+df_worksheets = m.get_spread_worksheets()
+global_variables = {}
+
 HIT = ['H1', 'HI', 'HB', 'H2', 'H3', 'HR']
 HOW_KOR_DICT = {'BB': '볼넷', 'BN': '번트', 'H1': '안타', 'H2': '2루타', 'H3': '3루타', 'HB': '번트안타',
                 'HI': '내야안타', 'HP': '사구', 'HR': '홈런', 'IB': '고의4구', 'KP': '포일',
@@ -201,6 +208,11 @@ def initialize(game_id):
     global hitter_method
     global pitcher_method
     global df_gamecontapp
+    global df_game_hitters
+    global df_game_pitchers
+    global df_record_matrix
+    global global_variables
+    global df_worksheets
 
     AWAY_ID = None
     HOME_ID = None
@@ -224,10 +236,17 @@ def initialize(game_id):
     hitter_method = None
     pitcher_method = None
     df_gamecontapp = None
+    df_game_hitters = None
+    df_game_pitchers = None
+    df_record_matrix = None
+    global_variables = {}
 
     team_name_dict = m.get_team_name()
     game_score = m.get_score(game_id)
     df_gamecontapp = m.get_df_gamecontapp(game_id)
+    df_game_hitters = m.get_df_today_hitters(game_id)
+    df_game_pitchers = m.get_df_today_pitchers(game_id)
+    df_record_matrix = m.get_df_record_matrix_mix(game_id)
 
     GAME_ID = game_id
     GAME_DATE = game_id[0:8]
@@ -314,7 +333,13 @@ def set_dynamic_variable(var, tab_name):
 
 
 def set_dynamic_variable_v2(var, tab_name):
-    df_dynamic = m.get_df_spread_template(tab_name)
+    worksheet = ''
+    for w in df_worksheets:
+        if w.title == tab_name:
+            worksheet = w
+            break
+    base_temp = worksheet.get_all_records()
+    df_dynamic = pd.DataFrame(base_temp)
     df_dynamic_group = df_dynamic.groupby(['order', 'name', 'rank'])
 
     for d in df_dynamic_group:
@@ -352,7 +377,10 @@ def get_attr(value, str_list):
             else:
                 var = attr_value
         if str_list:
-            return get_attr(var, str_list)
+            if var:
+                return get_attr(var, str_list)
+            else:
+                return None
         else:
             return var
 
@@ -366,7 +394,11 @@ def get_result_string(string, var):
     if param_list:
         for param in param_list:
             p = param.split('.')
-            param_dict.update({param: get_attr(var, p)})
+            if param in global_variables:
+                param_dict.update({param: global_variables[param]})
+            else:
+                global_variables.update({param: get_attr(var, p)})
+                param_dict.update({param: global_variables[param]})
 
     if param_dict:
         for k, v in param_dict.items():

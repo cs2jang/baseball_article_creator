@@ -8,7 +8,7 @@ class Team(object):
         self.game_id = g.GAME_ID
         self.tb = 'T' if self.game_id[8:10] == team_cd else 'B'
         self.df_gamecontapp = g.df_gamecontapp
-        self.df_today_hitters = g.m.get_df_today_hitters(self.game_id, self.tb)
+        self.df_today_hitters = g.df_game_hitters[g.df_game_hitters['TB'] == self.tb]
         g.define_method(self, g.team_method)
 
     def name(self):

@@ -1,4 +1,5 @@
 import globals as g
+import pandas as pd
 
 
 class Template(object):
@@ -9,7 +10,14 @@ class Template(object):
     def get_sentence(self):
         sentence_list = []
         active_tab_list = []
-        base_temp = g.m.get_spread_template('base_template')
+        worksheet = ''
+        for w in g.df_worksheets:
+            if w.title == 'base_template':
+                worksheet = w
+                break
+
+        base_temp = worksheet.get_all_records()
+        # base_temp = g.m.get_spread_worksheets('base_template')
         for bt in base_temp:
             if not bt['name']:
                 continue
@@ -22,7 +30,14 @@ class Template(object):
         return sentence_list
 
     def set_tab_info(self, tab_name):
-        _temp = g.m.get_df_spread_template(tab_name)
+        worksheet = ''
+        for w in g.df_worksheets:
+            if w.title == tab_name:
+                worksheet = w
+                break
+        base_temp = worksheet.get_all_records()
+        _temp = pd.DataFrame(base_temp)
+        # _temp = g.m.get_df_spread_template(tab_name)
         for t in _temp:
             if not t['name']:
                 continue

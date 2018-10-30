@@ -69,11 +69,11 @@ class Player(object):
             hitter = HitterRecord(self.player_code)
             return hitter
         else:
-            return HitterRecord()
+            return None
 
     def pitcher(self):
         if self.is_pitcher():
             pitcher = PitcherRecord(self.player_code)
             return pitcher
         else:
-            return PitcherRecord()
+            return None

@@ -12,14 +12,16 @@ class Lab2AIConn(object):
         self.gspread_credentials = ServiceAccountCredentials.from_json_keyfile_dict(cfg.GSPREAD_DICT, cfg.GSPREAD_SCOPE)
         self.gc = gspread.authorize(self.gspread_credentials)
 
-    def get_spread_template(self, tab_name):
+    def get_spread_worksheets(self):
         """
 
         :return: a list of dictionary
         """
-        sheet = self.gc.open_by_url(cfg.GSPREAD_URL).worksheet(tab_name)
-        result = sheet.get_all_records()
-        return result
+        # sheet = self.gc.open_by_url(cfg.GSPREAD_URL).worksheet(tab_name)
+        worksheets = self.gc.open_by_url(cfg.GSPREAD_URL).worksheets()
+
+        # result = sheet.get_all_records()
+        return worksheets
 
     def get_df_spread_template(self, tab_name):
         """
@@ -110,11 +112,41 @@ class Lab2AIConn(object):
         conn.close()
         return df
 
-    def get_df_today_hitters(self, game_id, tb):
+    def get_df_today_hitters(self, game_id, tb=None):
         conn = pymysql.connect(**cfg.DB_CONFIG)
 
+        if tb is None:
+            where_tb = ""
+        else:
+            where_tb = "AND TB = '{%s}'" % tb
+
         query_format = self.ql.get_query("query_common", "get_today_hitters")
-        query = query_format.format(GMKEY=game_id, TB=tb)
+        query = query_format.format(GMKEY=game_id, TB=where_tb)
+
+        df = pd.read_sql(query, conn)
+        conn.close()
+        return df
+
+    def get_df_today_pitchers(self, game_id, tb=None):
+        conn = pymysql.connect(**cfg.DB_CONFIG)
+
+        if tb is None:
+            where_tb = ""
+        else:
+            where_tb = "AND TB = '{%s}'" % tb
+
+        query_format = self.ql.get_query("query_common", "get_today_pitchers")
+        query = query_format.format(GMKEY=game_id, TB=where_tb)
+
+        df = pd.read_sql(query, conn)
+        conn.close()
+        return df
+
+    def get_df_pitcher_total(self, game_id, pitcher_code):
+        conn = pymysql.connect(**cfg.DB_CONFIG)
+
+        query_format = self.ql.get_query("query_common", "get_pitcher_total")
+        query = query_format.format(GYEAR=game_id[0:4], PCODE=pitcher_code)
 
         df = pd.read_sql(query, conn)
         conn.close()
@@ -178,6 +210,6 @@ class Lab2AIConn(object):
 
 if __name__ == "__main__":
     test = Lab2AIConn()
-    dv = test.get_spread_template('dynamic_variable')
+    dv = test.get_spread_worksheets('dynamic_variable')
     print(dv)
 
